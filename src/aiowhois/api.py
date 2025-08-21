@@ -1,19 +1,12 @@
 from __future__ import annotations
+
 import asyncio
-from .parse import parse_domain
-from .exceptions import BadExecutableException
-from .exceptions import WhoIsException
 import shutil
 
-
-class WhoisResult:
-    """WhoisResult encapsulates a whois query result"""
-
-    def __init__(self) -> None: ...
-
-    @classmethod
-    def from_bytes(cls, b: bytes) -> WhoisResult:
-        return cls()
+from .exceptions import BadExecutableException
+from .exceptions import WhoIsException
+from .parse import parse_domain
+from .result import WhoisResult
 
 
 async def whois(
@@ -48,7 +41,7 @@ async def whois(
         except Exception as exc:  # TODO: Narrow in scope later
             raise WhoIsException from exc
         out, err = await proc.communicate()
-        if proc.returncode != 0 or out is None or err is not None:
+        if proc.returncode != 0 or out is None or not err:
             raise WhoIsException("error querying whois server")
         return WhoisResult.from_bytes(out)
     return None
