@@ -7,17 +7,20 @@ import shutil
 from .exceptions import BadExecutableException
 from .exceptions import WhoIsException
 from .parse import parse_domain
-from .result import WhoisResult
+from .result import _tld_registry
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
+
+
+# TODO: Error handling, narrow types etc.
 
 
 async def whois(
     url: str,
     subprocess: bool = False,
     command: str = "whois",
-) -> WhoisResult | None:
+) -> dict[str, str]:
     """whois dispatches an asynchronous WHOIS protocol query.
     The query is typically dispatched over a TCP socket on port
     43 to the whois server responsible for TLDs.
@@ -30,7 +33,7 @@ async def whois(
     establish the socket and handle communication.  By default the command
     to run is `whois`.
     """
-    domain = parse_domain(url)
+    domain, tld = parse_domain(url)
     if subprocess:
         executable = await asyncio.to_thread(shutil.which, command)
         if executable is None:
@@ -42,13 +45,18 @@ async def whois(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-        except Exception as exc:  # TODO: Narrow in scope later
+        except Exception as exc:
             raise WhoIsException from exc
         out, err = await proc.communicate()
         if proc.returncode != 0 or out is None or err:
             raise WhoIsException("error querying whois server")
-        return WhoisResult.from_bytes(out)
+        cls = _tld_registry.get(tld)
+        if cls is None:
+            raise Exception("unsupported tld")
+        parser = cls()
+        parser.parse(out)
+        return parser.as_dict()
     else:
         # TODO: Write an actual python client.
         ...
-    return None
+    return {}
