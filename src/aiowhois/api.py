@@ -44,4 +44,7 @@ async def whois(
         if proc.returncode != 0 or out is None or not err:
             raise WhoIsException("error querying whois server")
         return WhoisResult.from_bytes(out)
+    else:
+        # TODO: Write an actual python client.
+        ...
     return None
