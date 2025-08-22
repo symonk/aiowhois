@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import shutil
 
 from .exceptions import BadExecutableException
 from .exceptions import WhoIsException
 from .parse import parse_domain
 from .result import WhoisResult
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
 
 
 async def whois(
@@ -41,7 +45,7 @@ async def whois(
         except Exception as exc:  # TODO: Narrow in scope later
             raise WhoIsException from exc
         out, err = await proc.communicate()
-        if proc.returncode != 0 or out is None or not err:
+        if proc.returncode != 0 or out is None or err:
             raise WhoIsException("error querying whois server")
         return WhoisResult.from_bytes(out)
     else:
