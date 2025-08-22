@@ -57,6 +57,7 @@ async def whois(
         parser.parse(out)
         return parser.as_dict()
     else:
-        # TODO: Write an actual python client.
+        # TODO: Write an actual python client (need to store/generate) whois servers
+        # per TLDs, stuff on $PATH i.e `whois` will be storing that internally.
         ...
     return {}
